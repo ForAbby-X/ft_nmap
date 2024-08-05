@@ -6,7 +6,7 @@
 #    By: alde-fre <alde-fre@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/11/25 09:39:09 by alde-fre          #+#    #+#              #
-#    Updated: 2024/08/04 14:54:18 by alde-fre         ###   ########.fr        #
+#    Updated: 2024/08/05 17:13:56 by alde-fre         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -27,7 +27,8 @@ LIBVEC_INC = -I $(LIBVEC_DIR)/inc
 
 ### SOURCES ###
 
-SRC		=	main.c
+SRC		=	ft_nmap/ft_nmap.c \
+			main.c
 
 
 ### OBJECTS ###

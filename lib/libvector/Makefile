@@ -4,7 +4,7 @@
 
 # Compiler options
 CC=cc
-CFLAGS= -MMD -MP -Wall -Wextra -Werror -Ofast
+CFLAGS= -MMD -MP -Wall -Wextra -Werror -O3
 LDFLAGS=
 BINARY_NAME=
 LIBRARY_NAME=libvector.a

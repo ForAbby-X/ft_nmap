@@ -6,7 +6,7 @@
 /*   By: alde-fre <alde-fre@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/11/04 15:17:22 by alde-fre          #+#    #+#             */
-/*   Updated: 2023/10/19 14:23:36 by alde-fre         ###   ########.fr       */
+/*   Updated: 2024/08/05 14:37:48 by alde-fre         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,6 +35,7 @@ void		*_vec_memcpy(void *dest, void *src, t_length const len);
 void		_vec_memmov(void *dest, void *src, t_length len);
 
 t_vector	vector_create(t_length const type_size);
+t_vector	vector_create_s(t_length const type_size, t_length const base_size);
 void		vector_destroy(t_vector *const vector);
 void		vector_set_copy_method(t_vector *const vector, t_copy_method cpy_m);
 //BOTH VECTORS MUST BE INITIALISED BEFORE

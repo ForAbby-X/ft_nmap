@@ -6,7 +6,7 @@
 /*   By: alde-fre <alde-fre@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/11/04 15:17:31 by alde-fre          #+#    #+#             */
-/*   Updated: 2023/06/16 11:09:33 by alde-fre         ###   ########.fr       */
+/*   Updated: 2024/08/05 17:07:22 by alde-fre         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,25 @@ t_vector	vector_create(t_length const type_size)
 		return (free(vector.data), (t_vector){0});
 	vector.size = 0u;
 	vector.capacity = VECTOR_DEFAULT_SIZE;
+	vector.type_size = type_size;
+	_vec_choose_method(&vector);
+	return (vector);
+}
+
+t_vector	vector_create_s(t_length const type_size, t_length const base_size)
+{
+	t_vector	vector;
+
+	if (type_size == 0)
+		return ((t_vector){0});
+	vector.data = malloc(type_size * base_size);
+	if (vector.data == NULL)
+		return ((t_vector){0});
+	vector.buffer = malloc(type_size);
+	if (vector.buffer == NULL)
+		return (free(vector.data), (t_vector){0});
+	vector.size = 0u;
+	vector.capacity = base_size;
 	vector.type_size = type_size;
 	_vec_choose_method(&vector);
 	return (vector);
