@@ -64,5 +64,5 @@ $(LIBRARY_NAME): $(OBJECT_FILES)
 $(OBJ)/%.o: $(SRC)/%.c .print_rule
 	@echo "\e[0;36m ↳\e[0;36m" $< "\e[0m"
 	@mkdir -p $(OBJ)
-	@$(CC) $(CFLAGS) -I $(INC) -c -o $@ $<
+	@$(CC) $(CFLAGS) -I $(INC) -fpie -c -o $@ $<
 

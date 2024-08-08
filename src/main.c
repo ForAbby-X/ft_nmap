@@ -6,7 +6,7 @@
 /*   By: alde-fre <alde-fre@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/04 14:23:39 by alde-fre          #+#    #+#             */
-/*   Updated: 2024/08/07 17:37:27 by alde-fre         ###   ########.fr       */
+/*   Updated: 2024/08/08 13:52:30 by alde-fre         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,12 +32,15 @@ int	main(int argc, char **argv)
 	}
 
 	t_nmap_options	options = {
-		.ports_to_scan = vector_create(sizeof(int)),
 		.number_of_thread = 1,
-		.send_ip_address = *(int *)(char [4]){127, 127, 127, 127},
+		.ports_to_scan = vector_create(sizeof(int)),
+
+		.send_ip_address = *(int *)(char [4]){127, 0, 0, 1},
 		.dest_ip_address = *(int *)(char [4]){127, 0, 0, 1},
 		.sock_protocol = IPPROTO_TCP,
-		.flags = 0
+		.flags = 0,
+
+		.libcap_device_name = NULL,
 	};
 
 	vector_addback(&options.ports_to_scan, &(int){20});

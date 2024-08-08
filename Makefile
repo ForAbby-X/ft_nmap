@@ -6,7 +6,7 @@
 #    By: alde-fre <alde-fre@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/11/25 09:39:09 by alde-fre          #+#    #+#              #
-#    Updated: 2024/08/07 13:33:14 by alde-fre         ###   ########.fr        #
+#    Updated: 2024/08/08 17:05:06 by alde-fre         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -68,7 +68,7 @@ obj:
 
 $(NAME): $(OBJ)
 	@echo "\e[1;35mLinking...\e[0m"
-	@$(CC) -pg -o $@ $+ -L $(LIBVEC_DIR) -l vector
+	@$(CC) -pg -o $@ $+ -lpthread -lpcap -L $(LIBVEC_DIR) -l vector
 	@echo "\e[1;32m➤" $@ "created succesfully !\e[0m"
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c .print
