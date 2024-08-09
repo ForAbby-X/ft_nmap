@@ -6,7 +6,7 @@
 /*   By: alde-fre <alde-fre@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/04 16:19:12 by alde-fre          #+#    #+#             */
-/*   Updated: 2024/08/08 15:51:29 by alde-fre         ###   ########.fr       */
+/*   Updated: 2024/08/09 11:23:06 by alde-fre         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,83 +17,36 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "ft_nmap/ft_nmap.h"
+#include "ft_nmap.h"
 #include "vector.h"
 
 /// MANAGER FUNCTIONS ///
 
 static inline int	__nmap_scan_create(t_nmap *const nmap, t_nmap_options const *const options)
 {
-	*nmap = (t_nmap){0};
+	memset(nmap, 0, sizeof(t_nmap));
 
 	// threads array
 	nmap->threads = vector_create_s(sizeof(t_nmap_thread), options->number_of_thread);
 	if (nmap->threads.data == NULL)
 		return (1);
-
+	
 	vector_resize(&nmap->threads, options->number_of_thread);
 
-	// file descriptor set
-	// FD_ZERO(&nmap->open_fd);
-	
 	return (0);
 }
 
-static inline int	__nmap_scan_init(t_nmap *const nmap)
-{
-	printf("libpcap_device_name: %s\n", nmap->libpcap_device_name);
-
-	/*
-	*	This function open the device for sniffing.
-	*
-	*	1. An array:	the name of the device to *sniff* on.
-	*	2. An integer:	defines the maximum number of bytes to capture.
-	*	3. An integer:	set the interface into promiscuous mode.
-	*	4. An integer:	is the time it wait for a response before timeout.
-	*	5. An array:	the buffer that will hold any error message.
-	*/
-	nmap->libpcap_handle = pcap_open_live(nmap->libpcap_device_name, 1, 1, 1000, nmap->libpcap_error_buff);
-	if (nmap->libpcap_handle == NULL)
-	{
-		perror("pcap_open_live() error");
-		fprintf(stderr, "Couldn't open device %s: %s\n", nmap->libpcap_device_name, nmap->libpcap_error_buff);
-		return (1);
-	}
-
-	/*
-	*	This function verifies that the selected device provides the necessary link-layer header.
-	*
-	*	In our case it is the 'Ethernet (10Mb)' layer equivalent to the flag 'DLT_EN10MB'.
-	*/
-	if (pcap_datalink(nmap->libpcap_handle) != DLT_EN10MB)
-	{
-		perror("pcap_datalink() error");
-		fprintf(stderr, "Device %s doesn't provide Ethernet headers - not supported\n", nmap->libpcap_error_buff);
-		return (2);
-	}
-
-	/*
-	*	This function will 'compile' just in time the string passed to it,
-	*	 applies a filter to it and a netmask.
-	*
-	*	TODO: CONTINUE HERE
-	*/
-	if (pcap_compile(pcap_t *p, struct bpf_program *fp, char *str, int optimize, bpf_u_int32 netmask) == -1)
-	{
-		perror("pcap_compile() error");
-		fprintf(stderr, "Device %s doesn't provide Ethernet headers - not supported\n", nmap->libpcap_error_buff);
-		return (3);
-	}
-
-	return (0);
-}
+// static inline int	__nmap_scan_init(t_nmap *const nmap, t_nmap_options *const options)
+// {
+// 	return (0);
+// }
 
 static inline void	__nmap_scan_free(t_nmap *const nmap)
 {
 	if (nmap->threads.data != NULL)
 		vector_destroy(&nmap->threads);
-}
 
+}
 
 static inline int	__nmap_scan_port(t_nmap *const nmap, t_nmap_options const *const options, int port)
 {
@@ -115,7 +68,7 @@ static inline int	__nmap_scan_port(t_nmap *const nmap, t_nmap_options const *con
 	}
 
 	/*
-	*  Now that the socket is setup we prepare the packet that will be sent.
+	*  Now that the socket is ready we prepare the packet that will be sent.
 	*/
 
 	t_net_socket source_net_socket = (t_net_socket){options->send_ip_address, 0};
@@ -124,7 +77,7 @@ static inline int	__nmap_scan_port(t_nmap *const nmap, t_nmap_options const *con
 	t_tcp_packet packet = tcp_packet_create(source_net_socket, dest_net_socket, IPPROTO_TCP, TCP_SET_FLAGS(0, TCP_FLAG_SYN));
 
 	/*
-	*	The packet is setup to simple tcp for now but we will need to change it to handle the different user input flags. 
+	*	The packet is arranged to simple tcp for now but we will need to change it to handle the different user input flags. 
 	*	This can be easily done by modifying <tcp_packet_create>.
 	*	Now i send the packet to the corresponding address and port.
 	*
@@ -153,7 +106,7 @@ static inline int	__nmap_scan_port(t_nmap *const nmap, t_nmap_options const *con
 
 	t_tcp_packet	recv_packet = {0};
 
-	printf("Waiting for response on thread %lu\n", pthread_self());
+	// printf("Waiting for response on thread %lu\n", pthread_self()); // @note: no you are not... the listener is however...
 
 	if (recvfrom(socket_fd, &recv_packet, sizeof(recv_packet), 0, NULL, NULL) < 0)
 	{
@@ -175,7 +128,7 @@ static inline int	__nmap_scan_port(t_nmap *const nmap, t_nmap_options const *con
 	*	 have a service that is handling the packet and so it is filtered...
 	*/
 
-	tcp_packet_display(&recv_packet);
+	// tcp_packet_display(&recv_packet);	// debug only
 
 	if (close(socket_fd))
 	{
@@ -208,27 +161,30 @@ static inline int	__nmap_scan_content(t_nmap *const nmap, t_nmap_options const *
 	t_length 		size_of_array = options->ports_to_scan.size / options->number_of_thread;
 	int				total_remain = options->ports_to_scan.size % options->number_of_thread;
 
+	printf("In scan content !\nWith %d threads !\n", nmap->threads.size);
+
+
 	int				*port_array = (int *)options->ports_to_scan.data;
-	t_nmap_thread	*threads_list = (t_nmap_thread *)nmap->threads.data;
+	t_nmap_thread	*threads_array = (t_nmap_thread *)nmap->threads.data;
 	for (t_length i = 0; i < nmap->threads.size; ++i)
 	{
 		t_length current_array_size = size_of_array + (total_remain-- > 0);
 
-		threads_list[i].nmap = nmap;
-		threads_list[i].options = (t_nmap_options *)options;
-		threads_list[i].port_array = port_array;
-		threads_list[i].port_size = current_array_size;
+		threads_array[i].nmap = nmap;
+		threads_array[i].options = (t_nmap_options *)options;
+		threads_array[i].port_array = port_array;
+		threads_array[i].port_size = current_array_size;
 
-		printf("Launching thread %u: at %p with %u\n", i, threads_list[i].port_array, threads_list[i].port_size);
+		printf("Launching thread %u: at %p with %u\n", i, threads_array[i].port_array, threads_array[i].port_size);
 
 		port_array += current_array_size;
 
-		pthread_create(&threads_list[i].thread_ptr, NULL, _nmap_thread_wrapper, threads_list + i);
+		pthread_create(&threads_array[i].thread_ptr, NULL, _nmap_thread_wrapper, threads_array + i);
 	}
 
 	// wait for all threads to finish
 	for (t_length i = 0; i < nmap->threads.size; ++i)
-		pthread_join(threads_list[i].thread_ptr, NULL);
+		pthread_join(threads_array[i].thread_ptr, NULL);
 
 	return (0);
 }
@@ -244,7 +200,7 @@ int	nmap_scan(t_nmap_options *const options)
 		options->number_of_thread = options->ports_to_scan.size;
 	}
 
-	if (__nmap_scan_create(&nmap, options))
+	if (__nmap_scan_create(&nmap, options)) // __nmap_scan_init(&nmap, options)
 	{
 		__nmap_scan_free(&nmap);
 		return (1);
