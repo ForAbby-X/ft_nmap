@@ -6,7 +6,7 @@
 /*   By: alde-fre <alde-fre@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/07 11:08:10 by alde-fre          #+#    #+#             */
-/*   Updated: 2024/08/09 11:02:26 by alde-fre         ###   ########.fr       */
+/*   Updated: 2024/08/16 14:50:10 by alde-fre         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@ uint32_t	net_rand_u32(uint32_t a)
 	a = a ^ (a >> 4);
 	a = a * 0x27d4eb2d;
 	a = a ^ (a >> 15);
-	return a;
+	return (a);
 }
 
 uint16_t	data_checksum(uint16_t *addr, uint32_t count)
@@ -80,11 +80,11 @@ t_ip_header		ip_header_create(uint32_t source_ip_address, uint32_t destination_i
 
 struct s_pseudo_header
 {
-	uint32_t saddr;
-	uint32_t daddr;
-	uint8_t zero;
-	uint8_t protocol;
-	uint16_t tcp_len;
+	uint32_t	saddr;
+	uint32_t	daddr;
+	uint8_t		zero;
+	uint8_t		protocol;
+	uint16_t	tcp_len;
 };
 
 /*

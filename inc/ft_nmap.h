@@ -6,7 +6,7 @@
 /*   By: alde-fre <alde-fre@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/04 16:15:31 by alde-fre          #+#    #+#             */
-/*   Updated: 2024/08/09 11:39:05 by alde-fre         ###   ########.fr       */
+/*   Updated: 2024/08/16 16:22:43 by alde-fre         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@ typedef struct s_nmap			t_nmap;
 typedef struct s_nmap_thread	t_nmap_thread;
 typedef struct s_nmap_options	t_nmap_options;
 
+typedef struct s_port_action	t_port_action;
 
 /// FUNCTION PROTOTYPE ///
 
@@ -55,12 +56,18 @@ struct s_nmap
 
 };
 
+struct s_port_action
+{
+	uint16_t	port;
+	uint16_t	actions;
+};
+
 struct s_nmap_thread
 {
 	// thread related
 	pthread_t		thread_ptr;		// pointer to the thread
 	t_length		port_size;		// number of ports to scan
-	int				*port_array;	// port array pointing to nmap global port vector
+	t_port_action	*port_array;	// port array pointing to nmap global port vector
 
 	// nmap related
 	t_nmap			*nmap;			// handle to nmap structure

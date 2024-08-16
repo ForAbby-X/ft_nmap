@@ -6,7 +6,7 @@
 /*   By: alde-fre <alde-fre@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/07 11:06:16 by alde-fre          #+#    #+#             */
-/*   Updated: 2024/08/09 12:00:30 by alde-fre         ###   ########.fr       */
+/*   Updated: 2024/08/16 16:07:34 by alde-fre         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,13 +22,15 @@
 # include <stdint.h>
 # include <string.h>
 # include <stdio.h>
+# include <pcap.h>
+# include <pthread.h>
 
 # include "vector.h" 
 
 /*
 *	Just changed this macro, to let it handle multiple flags at once
 *
-*	The old version is here:
+*	The old version is this:
 *	'# define TCP_GET_FLAGS(FLAGS, KEY)	(((FLAGS) & ((KEY) >> 4)) != 0)'
 *
 *	Alan De Freitas - 08/08/2024
@@ -47,6 +49,10 @@ typedef struct iphdr			t_ip_header;
 typedef struct tcphdr			t_tcp_header;
 typedef struct s_tcp_packet		t_tcp_packet;
 
+typedef struct s_port_packet	t_port_packet;
+
+typedef struct s_port_listener	t_port_listener;
+
 // FUNCTIONS //
 
 void			net_srand_u32(uint32_t a);
@@ -61,7 +67,15 @@ t_tcp_packet	tcp_packet_create(t_net_socket source_net_socket, t_net_socket dest
 void			tcp_packet_display(t_tcp_packet *const packet);
 
 
-int				port_listener(uint32_t ip_address, t_vector *const port);
+int				port_listener_init(t_port_listener *const listener, uint32_t ip_address, t_vector *const port);
+void			port_listener_destroy(t_port_listener *const listener);
+
+int				port_listener_start(t_port_listener	*const listener);
+void			port_listener_stop(t_port_listener	*const listener);
+
+t_port_packet	*port_listener_get(unsigned short port);
+t_port_packet	*port_listener_add(unsigned short port, uint8_t *packet_addr);
+
 
 // STRUCTURES //
 struct s_net_socket
@@ -80,6 +94,27 @@ struct s_net_map
 {
 	t_vector	vector;
 	
+};
+
+struct s_port_packet
+{
+	unsigned short	port;
+	t_vector		packets;
+};
+
+struct s_port_listener
+{
+	uint32_t			targeted_address;
+
+	pthread_t			thread;
+
+	pcap_t				*handle;
+	char				error_buff[PCAP_ERRBUF_SIZE];
+	char				*device_name;
+	bpf_u_int32			address;
+	bpf_u_int32			mask;
+
+	struct bpf_program	compiled_expression;	// might end up being individual to each threads (maybe even each port !).
 };
 
 #endif
