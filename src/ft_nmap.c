@@ -6,7 +6,7 @@
 /*   By: alde-fre <alde-fre@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/04 16:19:12 by alde-fre          #+#    #+#             */
-/*   Updated: 2024/08/16 17:52:52 by alde-fre         ###   ########.fr       */
+/*   Updated: 2024/08/20 13:48:01 by alde-fre         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -242,10 +242,9 @@ int	nmap_scan(t_nmap_options *const options)
 	}
 
 
-	port_listener_stop(&port_listener);
-
 	__nmap_scan_content(&nmap, options);
 
+	port_listener_stop(&port_listener);
 	__nmap_scan_free(&nmap);
 	port_listener_destroy(&port_listener);
 	return (0);

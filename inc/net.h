@@ -6,7 +6,7 @@
 /*   By: alde-fre <alde-fre@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/07 11:06:16 by alde-fre          #+#    #+#             */
-/*   Updated: 2024/08/20 14:11:14 by alde-fre         ###   ########.fr       */
+/*   Updated: 2024/08/20 17:26:58 by alde-fre         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@
 # include <linux/if_ether.h>
 # include <linux/tcp.h>
 # include <linux/ip.h>
+# include <net/ethernet.h>
 # include <sys/socket.h>
 # include <netinet/in.h>
 # include <stdint.h>

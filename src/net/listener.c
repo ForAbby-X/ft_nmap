@@ -6,7 +6,7 @@
 /*   By: alde-fre <alde-fre@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/09 08:20:10 by alde-fre          #+#    #+#             */
-/*   Updated: 2024/08/16 18:12:34 by alde-fre         ###   ########.fr       */
+/*   Updated: 2024/08/20 17:58:29 by alde-fre         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,20 +16,6 @@
 *	This global store a map of the packets stored for each port.
 */
 t_vector	g_packet_lists;
-
-// def dicho2bis(t, v):
-//     a = 0
-//     b = len(t)
-//     if b == 0:
-//       return False
-//     while True:
-//         m = (a + b) // 2
-//         if a == m:
-//           return t[a] == v
-//         if t[m] > v:
-//             b = m
-//         else:
-//             a = m
 
 // template <class ForwardIterator, class T>
 //   ForwardIterator lower_bound (ForwardIterator first, ForwardIterator last, const T& val)
@@ -113,6 +99,23 @@ t_port_packet	*port_listener_add(unsigned short port, uint8_t *packet_addr)
 	return (vector_insert(&sel->packets, &prt_pckt, sel_index));
 }
 
+void	display_packet_list() {
+	for (t_length i = 0; i < g_packet_lists.size; ++i)
+	{
+		t_port_packet *packet = vector_get(&g_packet_lists, i);
+		printf("Port: %d\n", packet->port);
+		for (t_length j = 0; j < packet->packets.size; ++j)
+		{
+			uint8_t *packet_data = vector_get(&packet->packets, j);
+			printf("Packet %u:", j);
+			for (size_t k = 0; k < sizeof(t_ip_header); ++k)
+				printf("%02x", packet_data[k]);
+			printf("\n");
+		}
+		printf("\n");
+	}
+}
+
 /*
 *	This function will create a pcap handle initialise it, configure it to listen
 *	 to everything coming from an ip and register every packets in a container.
@@ -135,13 +138,49 @@ t_port_packet	*port_listener_add(unsigned short port, uint8_t *packet_addr)
 *
 *	Alan De Freitas - 09/08/2024
 */
-static void	_individual_net_packet_handler(uint8_t *args, const struct pcap_pkthdr *packet_info, const uint8_t *packet)
+static void	_individual_net_packet_handler(uint8_t *args, struct pcap_pkthdr const *packet_info, uint8_t const *packet)
 {
-	(void)args; // should always be NULL
-	(void)packet;
+	t_eth_header	*eth_header;
+	t_ip_header		*ip_header;
+	t_tcp_header	*tcp_header;
+	// udp here	// actually we dont care about the type of packet here so idgaf
 
-	printf("Recevied a packet on at %lu:%lu\n", packet_info->ts.tv_sec, packet_info->ts.tv_usec);
-	printf("Packet received: length %d\n", packet_info->len);
+	(void)args; // should always be NULL
+
+	printf("PACKET RECEIVED WITH LEN %d:\n", packet_info->len);
+	// size_t i = 0;
+	// for (; i < packet_info->len / 8; ++i)
+	// {
+	// 	printf("%0.3zu: %0.16lx\n", i, ((uint64_t *)packet)[i]);
+	// }
+	// if ((packet_info->len % 8) != 0)
+	// 	printf("%0.3zu: %0.*lx\n", i, packet_info->len % 8, ((uint64_t *)packet)[i]);
+	
+	/*
+	*	Ethernet Header
+	*/
+	eth_header = (t_eth_header *)(packet);
+	if (ntohs(eth_header->h_proto) == ETHERTYPE_IP)
+	{
+		/*
+		*	IP Header
+		*/
+		ip_header = (t_ip_header *)(packet + sizeof(t_eth_header));
+		printf("IP HEADER PROTO: %d\n", ip_header->protocol);
+		if (ip_header->protocol == IPPROTO_TCP)
+		{
+			/*
+			*	TCP Header
+			*/
+			tcp_header = (t_tcp_header *)(packet + sizeof(t_eth_header) + sizeof(t_ip_header));
+			printf("RECV PACKET FROM PORT %d TO PORT %d\n", htons(tcp_header->source), htons(tcp_header->dest));
+
+			port_listener_add(htons(tcp_header->source), (uint8_t *)ip_header); // we add the ip header to still have the informations about the type of packet recevied (tcp/udp/icmp...)
+
+			if (g_packet_lists.size == 10)
+				display_packet_list();
+		}
+	}
 }
 
 int	port_listener_init(t_port_listener *const listener, uint32_t ip_address, t_vector *const port)
@@ -150,10 +189,10 @@ int	port_listener_init(t_port_listener *const listener, uint32_t ip_address, t_v
 
 	listener->targeted_address = ip_address;
 
-	//listener->device_name = "enp0s3"; // @warning may be the cause of crash later !!! @todo change this for user input !!!
-	pcap_if_t *device_list = NULL;		// @warning need to free this list !
-	pcap_findalldevs(&device_list, listener->error_buff);
-	listener->device_name = device_list->name;
+	listener->device_name = "lo"; // @warning may be the cause of crash later !!! @todo change this for user input !!!
+	// pcap_if_t *device_list = NULL;		// @warning need to free this list !
+	// pcap_findalldevs(&device_list, listener->error_buff);
+	// listener->device_name = device_list->name;
 
 
 	printf("listening to: %s\n", inet_ntoa((struct in_addr){listener->targeted_address}));
@@ -207,12 +246,12 @@ int	port_listener_init(t_port_listener *const listener, uint32_t ip_address, t_v
 	*	This function open the device for sniffing.
 	*
 	*	1. An array:	the name of the device to *sniff* on.
-	*	2. An integer:	defines the maximum number of bytes to capture.
+	*	2. An integer:	defines the maximum number of bytes to capture. 262144 should be enough or BUFSIZ
 	*	3. An integer:	set the interface into promiscuous mode.
 	*	4. An integer:	is the time it wait for a response before timeout.
-	*	5. An array:	the buffer that will hold any error message.
+	*	5. An array:	the buffer that will hold any error message.	
 	*/
-	listener->handle = pcap_open_live(listener->device_name, BUFSIZ, 1, 0001, listener->error_buff);
+	listener->handle = pcap_open_live(listener->device_name, 262144, 1, 100, listener->error_buff);
 	if (listener->handle == NULL)
 	{
 		fprintf(stderr, "pcap_open_live() error\n");
@@ -310,8 +349,10 @@ static void	*_listener_handle(void *arg)
 
 	printf("about to launch pcap_loop with %p\n", listener->handle);
 
+	pcap_set_timeout(listener->handle, 10000);
+
 	// the process will stay stuck here due to an infinite loop.
-	if (pcap_loop(listener->handle, 0, &_individual_net_packet_handler, NULL)) // last param is args value, i will probably not use it.
+	if (pcap_loop(listener->handle, 0, &_individual_net_packet_handler, NULL) == -1) // last	 param is args value, i will probably not use it.
 	{
 		fprintf(stderr, "pcap_loop() error\n");
 		fprintf(stderr, "Couldn't launch the pcap loop\n");
@@ -320,6 +361,9 @@ static void	*_listener_handle(void *arg)
 		
 		return (NULL);
 	}
+
+	printf("after pcap_loop hehe !!!!!!!!!!!!!!!!!!!\n");
+
 	return (NULL);
 }
 
