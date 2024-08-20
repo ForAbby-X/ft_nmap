@@ -6,7 +6,7 @@
 /*   By: alde-fre <alde-fre@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/04 16:15:31 by alde-fre          #+#    #+#             */
-/*   Updated: 2024/08/16 16:22:43 by alde-fre         ###   ########.fr       */
+/*   Updated: 2024/08/20 13:51:12 by alde-fre         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,8 @@ typedef struct s_nmap_thread	t_nmap_thread;
 typedef struct s_nmap_options	t_nmap_options;
 
 typedef struct s_port_action	t_port_action;
+
+typedef enum e_net_flag_e		e_net_flag_e;
 
 /// FUNCTION PROTOTYPE ///
 
@@ -80,6 +82,17 @@ struct s_nmap_port
 	t_net_flags		last_rcv_flags;
 
 	uint32_t		protocols;
+};
+
+enum	e_net_flag_e
+{
+	NMAP_SEND		= 0b00000011,
+	NMAP_SEND_TCP	= 0b00000001,
+	NMAP_SEND_UDP	= 0b00000010,
+
+	NMAP_RECV		= 0b00110000,
+	NMAP_RECV_TCP	= 0b00010000,
+	NMAP_RECV_UDP	= 0b00100000,
 };
 
 #endif
