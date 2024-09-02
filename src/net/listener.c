@@ -6,7 +6,7 @@
 /*   By: alde-fre <alde-fre@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/09 08:20:10 by alde-fre          #+#    #+#             */
-/*   Updated: 2024/08/20 17:58:29 by alde-fre         ###   ########.fr       */
+/*   Updated: 2024/08/23 13:53:10 by alde-fre         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,10 +71,14 @@ t_port_packet	*port_listener_get(unsigned short port)
 	if (g_packet_lists.size == 0)
 		return (NULL);
 
-	t_port_packet *sel = vector_get(&g_packet_lists, _lower_bound(port));	// @todo remove function call
-	
+	t_length index = _lower_bound(port);
+	if (index >= g_packet_lists.size)
+		return (NULL);
+
+	t_port_packet *sel = vector_get(&g_packet_lists, index);	// @todo remove function call
 	if (sel->port == port)
 		return (sel);
+
 	return (NULL);
 }
 
@@ -86,31 +90,47 @@ t_port_packet	*port_listener_add(unsigned short port, uint8_t *packet_addr)
 	t_length	sel_index = _lower_bound(port);
 	t_port_packet *sel = vector_get(&g_packet_lists, sel_index);			// @todo remove function call
 	
-	if (sel->port == port)
+	if (sel != NULL && sel->port == port)
 		return (vector_addback(&sel->packets, packet_addr));
-	
-	t_port_packet	prt_pckt;
 
+	t_port_packet	prt_pckt;
 	prt_pckt.packets = vector_create(sizeof(uint8_t *));
 	if (prt_pckt.packets.data == NULL)
 		return (NULL);
 	prt_pckt.port = port;
 
-	return (vector_insert(&sel->packets, &prt_pckt, sel_index));
+	return (vector_insert(&g_packet_lists, &prt_pckt, sel_index));
 }
 
-void	display_packet_list() {
+void	display_packet_list()
+{
 	for (t_length i = 0; i < g_packet_lists.size; ++i)
 	{
 		t_port_packet *packet = vector_get(&g_packet_lists, i);
 		printf("Port: %d\n", packet->port);
+		printf("Packets:\n");
 		for (t_length j = 0; j < packet->packets.size; ++j)
 		{
-			uint8_t *packet_data = vector_get(&packet->packets, j);
-			printf("Packet %u:", j);
-			for (size_t k = 0; k < sizeof(t_ip_header); ++k)
-				printf("%02x", packet_data[k]);
-			printf("\n");
+			t_ip_header *ip_header = vector_get(&packet->packets, j);
+
+			char src_ip[INET_ADDRSTRLEN] = {0};
+			char dst_ip[INET_ADDRSTRLEN] = {0};
+
+			inet_ntop(AF_INET, &ip_header->saddr, src_ip, INET_ADDRSTRLEN);
+			inet_ntop(AF_INET, &ip_header->daddr, dst_ip, INET_ADDRSTRLEN);
+
+			printf("	Packet %u:\n", j);
+			printf("		ihl = %d\n", ip_header->ihl);
+			printf("		version = %d\n", ip_header->version);
+			printf("		tos = %d\n", ip_header->tos);
+			printf("		tot_len = %d\n", ntohs(ip_header->tot_len));
+			printf("		id = %d\n",ntohs(ip_header->id));
+			printf("		frag_off = %d\n", ntohs(ip_header->frag_off));
+			printf("		ttl = %d\n", ip_header->ttl);
+			printf("		protocol = %d\n", ip_header->protocol);
+			printf("		check = %d\n", ntohs(ip_header->check));
+			printf("		saddr = %s\n", src_ip);
+			printf("		daddr = %s\n", dst_ip);
 		}
 		printf("\n");
 	}
@@ -166,16 +186,27 @@ static void	_individual_net_packet_handler(uint8_t *args, struct pcap_pkthdr con
 		*	IP Header
 		*/
 		ip_header = (t_ip_header *)(packet + sizeof(t_eth_header));
-		printf("IP HEADER PROTO: %d\n", ip_header->protocol);
+		printf("ihl = %d\n", ip_header->ihl);
+		printf("version = %d\n", ip_header->version);
+		printf("tos = %d\n", ip_header->tos);
+		printf("tot_len = %d\n", ip_header->tot_len);
+		printf("id = %d\n", ip_header->id);
+		printf("frag_off = %d\n", ip_header->frag_off);
+		printf("ttl = %d\n", ip_header->ttl);
+		printf("protocol = %d\n", ip_header->protocol);
+		printf("check = %d\n", ip_header->check);
+		printf("IP HEADER SRC ADDR: %s\n", inet_ntoa(*(struct in_addr *)&ip_header->saddr));
+		printf("IP HEADER DST ADDR: %s\n", inet_ntoa(*(struct in_addr *)&ip_header->daddr));
+
 		if (ip_header->protocol == IPPROTO_TCP)
 		{
 			/*
 			*	TCP Header
 			*/
 			tcp_header = (t_tcp_header *)(packet + sizeof(t_eth_header) + sizeof(t_ip_header));
-			printf("RECV PACKET FROM PORT %d TO PORT %d\n", htons(tcp_header->source), htons(tcp_header->dest));
+			printf("RECV PACKET FROM PORT %d TO PORT %d\n", ntohs(tcp_header->source), ntohs(tcp_header->dest));
 
-			port_listener_add(htons(tcp_header->source), (uint8_t *)ip_header); // we add the ip header to still have the informations about the type of packet recevied (tcp/udp/icmp...)
+			port_listener_add(ntohs(tcp_header->source), (uint8_t *)ip_header); // we add the ip header to still have the informations about the type of packet recevied (tcp/udp/icmp...)
 
 			if (g_packet_lists.size == 10)
 				display_packet_list();
