@@ -6,7 +6,7 @@
 /*   By: alde-fre <alde-fre@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/09 08:20:10 by alde-fre          #+#    #+#             */
-/*   Updated: 2024/08/23 13:53:10 by alde-fre         ###   ########.fr       */
+/*   Updated: 2024/09/02 17:46:45 by alde-fre         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -171,32 +171,41 @@ static void	_individual_net_packet_handler(uint8_t *args, struct pcap_pkthdr con
 	// size_t i = 0;
 	// for (; i < packet_info->len / 8; ++i)
 	// {
-	// 	printf("%0.3zu: %0.16lx\n", i, ((uint64_t *)packet)[i]);
+	// 	printf("	%0.3zu: %0.16lx\n", i, ((uint64_t *)packet)[i]);
 	// }
 	// if ((packet_info->len % 8) != 0)
-	// 	printf("%0.3zu: %0.*lx\n", i, packet_info->len % 8, ((uint64_t *)packet)[i]);
+	// 	printf("	%0.3zu: %0.*lx\n", i, packet_info->len % 8, ((uint64_t *)packet)[i]);
 	
+	// packet -= (long)packet & 0x000000000000000fL;	// align the packet to 4 bits
+	packet += 2;	// skip the first 2 bytes of the packet
+
 	/*
 	*	Ethernet Header
 	*/
 	eth_header = (t_eth_header *)(packet);
-	if (ntohs(eth_header->h_proto) == ETHERTYPE_IP)
+	printf("ETHERNET PACKET - size: %lu\n", sizeof(t_eth_header));	// testing ...
+	printf("	DEST ADDR: %02x:%02x:%02x:%02x:%02x:%02x\n", eth_header->ether_dhost[0], eth_header->ether_dhost[1], eth_header->ether_dhost[2], eth_header->ether_dhost[3], eth_header->ether_dhost[4], eth_header->ether_dhost[5]);
+	printf("	SRC ADDR: %02x:%02x:%02x:%02x:%02x:%02x\n", eth_header->ether_shost[0], eth_header->ether_shost[1], eth_header->ether_shost[2], eth_header->ether_shost[3], eth_header->ether_shost[4], eth_header->ether_shost[5]);
+	printf("	PROTO: %d\n", ntohs(eth_header->ether_type));
+
+	if (ntohs(eth_header->ether_type) == ETHERTYPE_IP)
 	{
 		/*
 		*	IP Header
 		*/
 		ip_header = (t_ip_header *)(packet + sizeof(t_eth_header));
-		printf("ihl = %d\n", ip_header->ihl);
-		printf("version = %d\n", ip_header->version);
-		printf("tos = %d\n", ip_header->tos);
-		printf("tot_len = %d\n", ip_header->tot_len);
-		printf("id = %d\n", ip_header->id);
-		printf("frag_off = %d\n", ip_header->frag_off);
-		printf("ttl = %d\n", ip_header->ttl);
-		printf("protocol = %d\n", ip_header->protocol);
-		printf("check = %d\n", ip_header->check);
-		printf("IP HEADER SRC ADDR: %s\n", inet_ntoa(*(struct in_addr *)&ip_header->saddr));
-		printf("IP HEADER DST ADDR: %s\n", inet_ntoa(*(struct in_addr *)&ip_header->daddr));
+		printf("	IP PACKET:\n");
+		printf("		ihl = %d\n", ip_header->ihl);
+		printf("		version = %d\n", ip_header->version);
+		printf("		tos = %d\n", ip_header->tos);
+		printf("		tot_len = %d\n", ntohs(ip_header->tot_len));
+		printf("		id = %d\n", ntohs(ip_header->id));
+		printf("		frag_off = %d\n", ntohs(ip_header->frag_off));
+		printf("		ttl = %d\n", ip_header->ttl);
+		printf("		protocol = %d\n", ip_header->protocol);
+		printf("		check = 0x%04x\n", ntohs(ip_header->check));
+		printf("		dest address: %s\n", inet_ntoa(*(struct in_addr *)&ip_header->daddr));
+		printf("		src address: %s\n", inet_ntoa(*(struct in_addr *)&ip_header->saddr));
 
 		if (ip_header->protocol == IPPROTO_TCP)
 		{
@@ -220,10 +229,10 @@ int	port_listener_init(t_port_listener *const listener, uint32_t ip_address, t_v
 
 	listener->targeted_address = ip_address;
 
-	listener->device_name = "lo"; // @warning may be the cause of crash later !!! @todo change this for user input !!!
-	// pcap_if_t *device_list = NULL;		// @warning need to free this list !
-	// pcap_findalldevs(&device_list, listener->error_buff);
-	// listener->device_name = device_list->name;
+	// listener->device_name = "lo";	// @warning may be the cause of crash later !!! @todo change this for user input !!!
+	pcap_if_t *device_list = NULL;		// @warning need to free this list !
+	pcap_findalldevs(&device_list, listener->error_buff);
+	listener->device_name = device_list->next->name;
 
 
 	printf("listening to: %s\n", inet_ntoa((struct in_addr){listener->targeted_address}));
@@ -307,12 +316,12 @@ int	port_listener_init(t_port_listener *const listener, uint32_t ip_address, t_v
 	*
 	*	In our case it is the 'Ethernet (10Mb)' layer equivalent to the flag 'DLT_EN10MB'.
 	*/
-	if (pcap_datalink(listener->handle) != DLT_EN10MB)
-	{
-		fprintf(stderr, "pcap_datalink() error\n");
-		fprintf(stderr, "Device %s doesn't provide Ethernet headers - not supported\n", listener->error_buff);
-		return (5);
-	}
+	// if (pcap_datalink(listener->handle) != DLT_EN10MB)
+	// {
+	// 	fprintf(stderr, "pcap_datalink() error\n");
+	// 	fprintf(stderr, "Device %s doesn't provide Ethernet headers - not supported\n", listener->error_buff);
+	// 	return (5);
+	// }
 
 	/*
 	*	The expression is the non compiled code that will be used to filter data on the network.

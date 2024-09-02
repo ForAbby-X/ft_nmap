@@ -6,7 +6,7 @@
 /*   By: alde-fre <alde-fre@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/07 11:06:16 by alde-fre          #+#    #+#             */
-/*   Updated: 2024/08/20 17:26:58 by alde-fre         ###   ########.fr       */
+/*   Updated: 2024/09/02 16:26:19 by alde-fre         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,7 +46,7 @@ typedef struct sockaddr_in		t_sockaddr;
 
 typedef uint32_t				t_net_flags;
 
-typedef struct ethhdr			t_eth_header;
+typedef struct ether_header		t_eth_header;
 typedef struct iphdr			t_ip_header;
 typedef struct tcphdr			t_tcp_header;
 typedef struct s_tcp_packet		t_tcp_packet;

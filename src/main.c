@@ -6,7 +6,7 @@
 /*   By: alde-fre <alde-fre@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/04 14:23:39 by alde-fre          #+#    #+#             */
-/*   Updated: 2024/08/16 12:46:51 by alde-fre         ###   ########.fr       */
+/*   Updated: 2024/09/02 15:52:56 by alde-fre         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,12 +35,12 @@ int	main(int argc, char **argv)
 		.number_of_thread = 1,
 		.ports_to_scan = vector_create(sizeof(int)),
 
-		.send_ip_address = *(int *)(char [4]){10, 0, 2, 15},
-		.dest_ip_address = *(int *)(char [4]){127, 0, 0, 1},
+		.send_ip_address = inet_addr(argv[1]),
+		.dest_ip_address = inet_addr("10.18.191.24"),
 		.sock_protocol = IPPROTO_TCP,
 		.flags = 0,
 
-		.libcap_device_name = "enp0s3",
+		.libcap_device_name = "lo",
 	};
 
 	vector_addback(&options.ports_to_scan, &(int){20});

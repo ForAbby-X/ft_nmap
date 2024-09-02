@@ -6,7 +6,7 @@
 /*   By: alde-fre <alde-fre@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/07 11:08:10 by alde-fre          #+#    #+#             */
-/*   Updated: 2024/08/20 16:05:06 by alde-fre         ###   ########.fr       */
+/*   Updated: 2024/09/02 16:36:26 by alde-fre         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -146,34 +146,34 @@ void	tcp_packet_display(t_tcp_packet *const packet)
 	size_t	char_len = 0;
 
 	char_len += sprintf(char_buffer + char_len, "IP HEADER\n");
-	char_len += sprintf(char_buffer + char_len, "ihl = %d\n", packet->ip_header.ihl);
-	char_len += sprintf(char_buffer + char_len, "version = %d\n", packet->ip_header.version);
-	char_len += sprintf(char_buffer + char_len, "tos = %d\n", packet->ip_header.tos);
-	char_len += sprintf(char_buffer + char_len, "tot_len = %d\n", packet->ip_header.tot_len);
-	char_len += sprintf(char_buffer + char_len, "id = %d\n", packet->ip_header.id);
-	char_len += sprintf(char_buffer + char_len, "frag_off = %d\n", packet->ip_header.frag_off);
+	char_len += sprintf(char_buffer + char_len, "	ihl = %d\n", packet->ip_header.ihl);
+	char_len += sprintf(char_buffer + char_len, "	version = %d\n", packet->ip_header.version);
+	char_len += sprintf(char_buffer + char_len, "	tos = %d\n", packet->ip_header.tos);
+	char_len += sprintf(char_buffer + char_len, "	tot_len = %d\n", packet->ip_header.tot_len);
+	char_len += sprintf(char_buffer + char_len, "	id = %d\n", packet->ip_header.id);
+	char_len += sprintf(char_buffer + char_len, "	frag_off = %d\n", packet->ip_header.frag_off);
 
-	char_len += sprintf(char_buffer + char_len, "ttl = %d\n", packet->ip_header.ttl);
-	char_len += sprintf(char_buffer + char_len, "protocol = %d\n", packet->ip_header.protocol);
-	char_len += sprintf(char_buffer + char_len, "check = %d\n", packet->ip_header.check);
-	char_len += sprintf(char_buffer + char_len, "saddr = %s\n", inet_ntoa(*(struct in_addr *)&packet->ip_header.saddr));
-	char_len += sprintf(char_buffer + char_len, "daddr = %s\n", inet_ntoa(*(struct in_addr *)&packet->ip_header.daddr));
+	char_len += sprintf(char_buffer + char_len, "	ttl = %d\n", packet->ip_header.ttl);
+	char_len += sprintf(char_buffer + char_len, "	protocol = %d\n", packet->ip_header.protocol);
+	char_len += sprintf(char_buffer + char_len, "	check = %d\n", packet->ip_header.check);
+	char_len += sprintf(char_buffer + char_len, "	saddr = %s\n", inet_ntoa(*(struct in_addr *)&packet->ip_header.saddr));
+	char_len += sprintf(char_buffer + char_len, "	daddr = %s\n", inet_ntoa(*(struct in_addr *)&packet->ip_header.daddr));
 	
-	char_len += sprintf(char_buffer + char_len, "TCP HEADER\n");
-	char_len += sprintf(char_buffer + char_len, "source = %d\n", packet->tcp_header.source);
-	char_len += sprintf(char_buffer + char_len, "dest = %d\n", packet->tcp_header.dest);
-	char_len += sprintf(char_buffer + char_len, "seq = %d\n", packet->tcp_header.seq);
-	char_len += sprintf(char_buffer + char_len, "ack_seq = %d\n", packet->tcp_header.ack_seq);
-	char_len += sprintf(char_buffer + char_len, "doff = %d\n", packet->tcp_header.doff);
-	char_len += sprintf(char_buffer + char_len, "fin = %d\n", packet->tcp_header.fin);
-	char_len += sprintf(char_buffer + char_len, "syn = %d\n", packet->tcp_header.syn);
-	char_len += sprintf(char_buffer + char_len, "rst = %d\n", packet->tcp_header.rst);
-	char_len += sprintf(char_buffer + char_len, "psh = %d\n", packet->tcp_header.psh);
-	char_len += sprintf(char_buffer + char_len, "ack = %d\n", packet->tcp_header.ack);
-	char_len += sprintf(char_buffer + char_len, "urg = %d\n", packet->tcp_header.urg);
-	char_len += sprintf(char_buffer + char_len, "window = %d\n", packet->tcp_header.window);
-	char_len += sprintf(char_buffer + char_len, "check = %d\n", packet->tcp_header.check);
-	char_len += sprintf(char_buffer + char_len, "urg_ptr = %d\n", packet->tcp_header.urg_ptr);
+	char_len += sprintf(char_buffer + char_len, "	TCP HEADER\n");
+	char_len += sprintf(char_buffer + char_len, "		source = %d\n", packet->tcp_header.source);
+	char_len += sprintf(char_buffer + char_len, "		dest = %d\n", packet->tcp_header.dest);
+	char_len += sprintf(char_buffer + char_len, "		seq = %d\n", packet->tcp_header.seq);
+	char_len += sprintf(char_buffer + char_len, "		ack_seq = %d\n", packet->tcp_header.ack_seq);
+	char_len += sprintf(char_buffer + char_len, "		doff = %d\n", packet->tcp_header.doff);
+	char_len += sprintf(char_buffer + char_len, "		fin = %d\n", packet->tcp_header.fin);
+	char_len += sprintf(char_buffer + char_len, "		syn = %d\n", packet->tcp_header.syn);
+	char_len += sprintf(char_buffer + char_len, "		rst = %d\n", packet->tcp_header.rst);
+	char_len += sprintf(char_buffer + char_len, "		psh = %d\n", packet->tcp_header.psh);
+	char_len += sprintf(char_buffer + char_len, "		ack = %d\n", packet->tcp_header.ack);
+	char_len += sprintf(char_buffer + char_len, "		urg = %d\n", packet->tcp_header.urg);
+	char_len += sprintf(char_buffer + char_len, "		window = %d\n", packet->tcp_header.window);
+	char_len += sprintf(char_buffer + char_len, "		check = %d\n", packet->tcp_header.check);
+	char_len += sprintf(char_buffer + char_len, "		urg_ptr = %d\n", packet->tcp_header.urg_ptr);
 
 	fwrite(char_buffer, 1, char_len, stdout);
 	printf("charlen: %zu\n", char_len);

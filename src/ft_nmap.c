@@ -6,7 +6,7 @@
 /*   By: alde-fre <alde-fre@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/04 16:19:12 by alde-fre          #+#    #+#             */
-/*   Updated: 2024/08/23 11:35:49 by alde-fre         ###   ########.fr       */
+/*   Updated: 2024/09/02 16:14:03 by alde-fre         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,11 +84,14 @@ static inline int	__nmap_scan_port(t_nmap *const nmap, t_nmap_options const *con
 	dest_addr.sin_port = htons(port_action->port);
 	dest_addr.sin_addr.s_addr = options->dest_ip_address;
 
-	if (sendto(socket_fd, &packet, sizeof(packet), 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr)) < 0)
+	ssize_t ret_sendto = sendto(socket_fd, &packet, sizeof(packet), 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
+	if (ret_sendto < 0)
 	{
 		perror("sendto() error");
 		return (3);
 	}
+	printf("	Packet sent to %s:%d\n", inet_ntoa(*(struct in_addr *)&options->dest_ip_address), port_action->port);
+	printf("	Packet size: %ld\n", ret_sendto);
 
 	/*
 	*	Now that the packet is surfing on the internet we wait for a response,
@@ -210,7 +213,7 @@ int	nmap_scan(t_nmap_options *const options)
 	{
 		fprintf(stderr, "port_listener_init() error\n");
 		fprintf(stderr, "Can't init port listener\n");
-		port_listener_destroy(&port_listener);					// forcing myself to o that to respect the engineer guide: "fast and ugly"
+		port_listener_destroy(&port_listener);					// forcing myself to do that to respect the engineer guide: "fast and ugly"
 		return (1);
 	}
 
