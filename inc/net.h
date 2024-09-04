@@ -6,7 +6,7 @@
 /*   By: alde-fre <alde-fre@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/07 11:06:16 by alde-fre          #+#    #+#             */
-/*   Updated: 2024/09/02 16:26:19 by alde-fre         ###   ########.fr       */
+/*   Updated: 2024/09/04 16:05:28 by alde-fre         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,10 +14,13 @@
 # define NET_H
 
 // # include <linux/in.h>
-# include <linux/if_ether.h>
-# include <linux/tcp.h>
-# include <linux/ip.h>
-# include <net/ethernet.h>
+// # include <linux/if_ether.h>
+// # include <linux/tcp.h>
+// # include <linux/ip.h>
+
+// # include <net/ethernet.h>
+// # include <net/if_packet.h>
+
 # include <sys/socket.h>
 # include <netinet/in.h>
 # include <stdint.h>
@@ -28,16 +31,7 @@
 
 # include "vector.h" 
 
-/*
-*	Just changed this macro, to let it handle multiple flags at once
-*
-*	The old version is this:
-*	'# define TCP_GET_FLAGS(FLAGS, KEY)	(((FLAGS) & ((KEY) >> 4)) != 0)'
-*
-*	Alan De Freitas - 08/08/2024
-*/
-# define TCP_GET_FLAGS(FLAGS, KEY)	(((FLAGS) & ((KEY) >> 4)) == ((KEY) >> 4))
-# define TCP_SET_FLAGS(FLAGS, KEY)	(((FLAGS) | ((KEY) >> 4)))
+# include "net_flags.h"
 
 // TYPEDEFS //
 
@@ -46,9 +40,9 @@ typedef struct sockaddr_in		t_sockaddr;
 
 typedef uint32_t				t_net_flags;
 
-typedef struct ether_header		t_eth_header;
-typedef struct iphdr			t_ip_header;
-typedef struct tcphdr			t_tcp_header;
+typedef struct s_eth_header		t_eth_header;
+typedef struct s_ip_header		t_ip_header;
+typedef struct s_tcp_header		t_tcp_header;
 typedef struct s_tcp_packet		t_tcp_packet;
 
 typedef struct s_port_packet	t_port_packet;
@@ -86,11 +80,52 @@ struct s_net_socket
 	uint16_t		port;
 };
 
+struct s_eth_header
+{
+	uint8_t		dest[6];
+	uint8_t		src[6];
+	uint16_t	type;
+} __attribute__((__packed__));
+
+struct s_ip_header
+{
+	uint8_t		ihl:4;
+	uint8_t		version:4;
+	uint8_t		tos;
+	uint16_t	tot_len;
+	uint16_t	id;
+	uint16_t	frag_off;
+	uint8_t		ttl;
+	uint8_t		protocol;
+	uint16_t	check;
+	uint32_t	saddr;
+	uint32_t	daddr;
+} __attribute__((__packed__));
+
+struct s_tcp_header
+{
+	uint16_t	source;
+	uint16_t	dest;
+	uint32_t	seq;
+	uint32_t	ack_seq;
+	uint16_t	doff:4;
+	uint16_t	res1:4;
+	uint16_t	fin:1;
+	uint16_t	syn:1;
+	uint16_t	rst:1;
+	uint16_t	psh:1;
+	uint16_t	ack:1;
+	uint16_t	urg:1;
+	uint16_t	window;
+	uint16_t	check;
+	uint16_t	urg_ptr;
+} __attribute__((__packed__));
+
 struct s_tcp_packet
 {
 	t_ip_header		ip_header;
 	t_tcp_header	tcp_header;
-};
+} __attribute__((__packed__));
 
 struct s_net_map
 {
@@ -115,6 +150,7 @@ struct s_port_listener
 	char				*device_name;
 	bpf_u_int32			address;
 	bpf_u_int32			mask;
+	int					link_layer_type;
 
 	struct bpf_program	compiled_expression;	// might end up being individual to each threads (maybe even each port !).
 };

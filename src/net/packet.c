@@ -6,7 +6,7 @@
 /*   By: alde-fre <alde-fre@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/07 11:08:10 by alde-fre          #+#    #+#             */
-/*   Updated: 2024/09/02 16:36:26 by alde-fre         ###   ########.fr       */
+/*   Updated: 2024/09/04 12:31:15 by alde-fre         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,16 +64,16 @@ t_ip_header		ip_header_create(uint32_t source_ip_address, uint32_t destination_i
 	ip_header.ihl = 5;													// the header length is 5 times 32 bits (20 bytes) because we don't use any options
 	ip_header.version = 4;
 	ip_header.tos = 0;
-	ip_header.tot_len = sizeof(t_ip_header) + sizeof(t_tcp_header);		// the total length of the full packets in bytes, the value here is pre calculated for the TCP header
-	ip_header.id = 0;													// the identification number, arbitrary in our case mostly because it is used for fragmentation
-	ip_header.frag_off = 0;												// the fragmentation offset, 0 here because we don't fragment the packet
+	ip_header.tot_len = htons(sizeof(t_ip_header) + sizeof(t_tcp_header));		// the total length of the full packets in bytes, the value here is pre calculated for the TCP header
+	ip_header.id = htons(0);													// the identification number, arbitrary in our case mostly because it is used for fragmentation
+	ip_header.frag_off = htons(0);												// the fragmentation offset, 0 here because we don't fragment the packet
 	ip_header.ttl = 255;												// the number of time the packet can travers a network node before being dropped
 	ip_header.protocol = protocol;										// the protocol is used to define the type of the data part of the packet
-	ip_header.check = 0;
-	ip_header.saddr = source_ip_address;
-	ip_header.daddr = destination_ip_address;
+	ip_header.check = htons(0);
+	ip_header.saddr = htonl(source_ip_address);
+	ip_header.daddr = htonl(destination_ip_address);
 	
-	ip_header.check = data_checksum((uint16_t *)&ip_header, ip_header.ihl << 2);
+	ip_header.check = htons(data_checksum((uint16_t *)&ip_header, ip_header.ihl << 2));
 
 	return (ip_header);
 }
@@ -102,8 +102,8 @@ t_tcp_header	tcp_header_create(t_net_flags const flags, t_net_socket source_net_
 
 	struct s_pseudo_header *pseudo_header = (struct s_pseudo_header *)(tcp_header_buffer);
 
-	pseudo_header->saddr = source_net_socket.address;
-	pseudo_header->daddr = destination_net_socket.address;
+	pseudo_header->saddr = htonl(source_net_socket.address);
+	pseudo_header->daddr = htonl(destination_net_socket.address);
 	pseudo_header->zero = 0;
 	pseudo_header->protocol = IPPROTO_TCP;
 	pseudo_header->tcp_len = htons(sizeof(t_tcp_header));
@@ -112,20 +112,20 @@ t_tcp_header	tcp_header_create(t_net_flags const flags, t_net_socket source_net_
 
 	tcp_header->source = htons(source_net_socket.port);
 	tcp_header->dest = htons(destination_net_socket.port);
-	tcp_header->seq = 0;
-	tcp_header->ack_seq = 0;
-	tcp_header->doff = 5;												// the header length is 5 times 32 bits (20 bytes) because we don't use any options nor data
-	tcp_header->fin = TCP_GET_FLAGS(flags, TCP_FLAG_FIN);				// the FIN flag is set if the connection is closed
-	tcp_header->syn = TCP_GET_FLAGS(flags, TCP_FLAG_SYN);				// the SYN flag is set if the connection is initiated
-	tcp_header->rst = TCP_GET_FLAGS(flags, TCP_FLAG_RST);				// the RST flag is set if the connection is reset
-	tcp_header->psh = TCP_GET_FLAGS(flags, TCP_FLAG_PSH);				// the PSH flag is set if the data is pushed to the application
-	tcp_header->ack = TCP_GET_FLAGS(flags, TCP_FLAG_ACK);				// the ACK flag is set if the packet is an acknowledgment
-	tcp_header->urg = TCP_GET_FLAGS(flags, TCP_FLAG_URG);				// the URG flag is set if the packet is urgent
+	tcp_header->seq = htons(0);
+	tcp_header->ack_seq = htonl(0);
+	tcp_header->doff = htons(5);									// the header length is 5 times 32 bits (20 bytes) because we don't use any options nor data
+	tcp_header->fin = htons(TCP_GET_FLAGS(flags, TCP_FLAG_FIN));	// the FIN flag is set if the connection is closed
+	tcp_header->syn = htons(TCP_GET_FLAGS(flags, TCP_FLAG_SYN));	// the SYN flag is set if the connection is initiated
+	tcp_header->rst = htons(TCP_GET_FLAGS(flags, TCP_FLAG_RST));	// the RST flag is set if the connection is reset
+	tcp_header->psh = htons(TCP_GET_FLAGS(flags, TCP_FLAG_PSH));	// the PSH flag is set if the data is pushed to the application
+	tcp_header->ack = htons(TCP_GET_FLAGS(flags, TCP_FLAG_ACK));	// the ACK flag is set if the packet is an acknowledgment
+	tcp_header->urg = htons(TCP_GET_FLAGS(flags, TCP_FLAG_URG));	// the URG flag is set if the packet is urgent
 	tcp_header->window = htons(5840);
-	tcp_header->check = 0;
-	tcp_header->urg_ptr = 0;
+	tcp_header->check = htons(0);
+	tcp_header->urg_ptr = htons(0);
 
-	tcp_header->check = data_checksum((uint16_t *)tcp_header_buffer, sizeof(tcp_header_buffer));
+	tcp_header->check = htons(data_checksum((uint16_t *)tcp_header_buffer, sizeof(tcp_header_buffer)));
 
 	return (*tcp_header);
 }
@@ -156,8 +156,8 @@ void	tcp_packet_display(t_tcp_packet *const packet)
 	char_len += sprintf(char_buffer + char_len, "	ttl = %d\n", packet->ip_header.ttl);
 	char_len += sprintf(char_buffer + char_len, "	protocol = %d\n", packet->ip_header.protocol);
 	char_len += sprintf(char_buffer + char_len, "	check = %d\n", packet->ip_header.check);
-	char_len += sprintf(char_buffer + char_len, "	saddr = %s\n", inet_ntoa(*(struct in_addr *)&packet->ip_header.saddr));
-	char_len += sprintf(char_buffer + char_len, "	daddr = %s\n", inet_ntoa(*(struct in_addr *)&packet->ip_header.daddr));
+	// char_len += sprintf(char_buffer + char_len, "	saddr = %s\n", inet_ntoa(*(struct in_addr *)&packet->ip_header.saddr));
+	// char_len += sprintf(char_buffer + char_len, "	daddr = %s\n", inet_ntoa(*(struct in_addr *)&packet->ip_header.daddr));
 	
 	char_len += sprintf(char_buffer + char_len, "	TCP HEADER\n");
 	char_len += sprintf(char_buffer + char_len, "		source = %d\n", packet->tcp_header.source);

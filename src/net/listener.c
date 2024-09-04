@@ -6,11 +6,12 @@
 /*   By: alde-fre <alde-fre@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/09 08:20:10 by alde-fre          #+#    #+#             */
-/*   Updated: 2024/09/02 17:46:45 by alde-fre         ###   ########.fr       */
+/*   Updated: 2024/09/04 16:06:00 by alde-fre         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "net.h"
+#include "net_flags.h"
 
 /*
 *	This global store a map of the packets stored for each port.
@@ -123,12 +124,12 @@ void	display_packet_list()
 			printf("		ihl = %d\n", ip_header->ihl);
 			printf("		version = %d\n", ip_header->version);
 			printf("		tos = %d\n", ip_header->tos);
-			printf("		tot_len = %d\n", ntohs(ip_header->tot_len));
-			printf("		id = %d\n",ntohs(ip_header->id));
-			printf("		frag_off = %d\n", ntohs(ip_header->frag_off));
+			printf("		tot_len = %d\n", ip_header->tot_len);
+			printf("		id = %d\n",ip_header->id);
+			printf("		frag_off = %d\n", ip_header->frag_off);
 			printf("		ttl = %d\n", ip_header->ttl);
 			printf("		protocol = %d\n", ip_header->protocol);
-			printf("		check = %d\n", ntohs(ip_header->check));
+			printf("		check = %d\n", ip_header->check);
 			printf("		saddr = %s\n", src_ip);
 			printf("		daddr = %s\n", dst_ip);
 		}
@@ -137,58 +138,65 @@ void	display_packet_list()
 }
 
 /*
-*	This function will create a pcap handle initialise it, configure it to listen
-*	 to everything coming from an ip and register every packets in a container.
-*
-*	As for the container to use; i still dont know...
-*	 probably a map with the port as the key, and a vector as the value,
-*	 or a sorted vector with ports and a pointer to the data in a large buffer. 
-*
-*
-*	My thought is that with a global listener like that we end up with alot of
-*	 memory used for a simple task as *watching* tcp flags...
-*	Not to mention the overhead of storing, sorting and freeing all these memory...
-*
-*	I should probably do a simple listener that gather only the flags related to
-*	 each protocol that i will use (TCP, UDP, ICMP...)
-*
-*	But the drawback will be that if i want to identify the system running on the
-*	 port i need to send an http request and so gather it.
-*	And so store the whole packets...
-*
-*	Alan De Freitas - 09/08/2024
-*/
+ *	This function will create a pcap handle initialise it, configure it to listen
+ *	 to everything coming from an ip and register every packets in a container.
+ *
+ *	As for the container to use; i still dont know...
+ *	 probably a map with the port as the key, and a vector as the value,
+ *	 or a sorted vector with ports and a pointer to the data in a large buffer. 
+ *
+ *
+ *	My thought is that with a global listener like that we end up with alot of
+ *	 memory used for a simple task as *watching* tcp flags...
+ *	Not to mention the overhead of storing, sorting and freeing all these memory...
+ *
+ *	I should probably do a simple listener that gather only the flags related to
+ *	 each protocol that i will use (TCP, UDP, ICMP...)
+ *
+ *	But the drawback will be that if i want to identify the system running on the
+ *	 port i need to send an http request and so gather it.
+ *	And so store the whole packets...
+ *
+ *	Alan De Freitas - 09/08/2024
+ */
 static void	_individual_net_packet_handler(uint8_t *args, struct pcap_pkthdr const *packet_info, uint8_t const *packet)
 {
-	t_eth_header	*eth_header;
+	// t_eth_header	*eth_header;
 	t_ip_header		*ip_header;
 	t_tcp_header	*tcp_header;
 	// udp here	// actually we dont care about the type of packet here so idgaf
 
-	(void)args; // should always be NULL
+	packet += 2;
 
+	(void)args; // should always be NULL
 	printf("PACKET RECEIVED WITH LEN %d:\n", packet_info->len);
-	// size_t i = 0;
-	// for (; i < packet_info->len / 8; ++i)
-	// {
-	// 	printf("	%0.3zu: %0.16lx\n", i, ((uint64_t *)packet)[i]);
-	// }
-	// if ((packet_info->len % 8) != 0)
-	// 	printf("	%0.3zu: %0.*lx\n", i, packet_info->len % 8, ((uint64_t *)packet)[i]);
+
+	printf("PACKET HEXA: ");
+	for (size_t i = 0; i < sizeof(t_eth_header); ++i)
+	{
+		printf("%0.2x:", packet[i]);
+	}
+	printf("\n");
 	
 	// packet -= (long)packet & 0x000000000000000fL;	// align the packet to 4 bits
-	packet += 2;	// skip the first 2 bytes of the packet
+	// packet += 2;	// skip the first 2 bytes of the packet // if little endian
+
+
+	// uint16_t test = 0x1;
+	// if (*((uint8_t *)&test) == 0x1)
+	// 	packet = 3;
 
 	/*
 	*	Ethernet Header
 	*/
-	eth_header = (t_eth_header *)(packet);
-	printf("ETHERNET PACKET - size: %lu\n", sizeof(t_eth_header));	// testing ...
-	printf("	DEST ADDR: %02x:%02x:%02x:%02x:%02x:%02x\n", eth_header->ether_dhost[0], eth_header->ether_dhost[1], eth_header->ether_dhost[2], eth_header->ether_dhost[3], eth_header->ether_dhost[4], eth_header->ether_dhost[5]);
-	printf("	SRC ADDR: %02x:%02x:%02x:%02x:%02x:%02x\n", eth_header->ether_shost[0], eth_header->ether_shost[1], eth_header->ether_shost[2], eth_header->ether_shost[3], eth_header->ether_shost[4], eth_header->ether_shost[5]);
-	printf("	PROTO: %d\n", ntohs(eth_header->ether_type));
+	// eth_header = (t_eth_header *)(packet);
 
-	if (ntohs(eth_header->ether_type) == ETHERTYPE_IP)
+	// printf("ETHERNET PACKET - size: %lu\n", sizeof(t_eth_header));	// testing ...
+	// printf("	DEST ADDR: %02x:%02x:%02x:%02x:%02x:%02x\n", eth_header->dest[0], eth_header->dest[1], eth_header->dest[2], eth_header->dest[3], eth_header->dest[4], eth_header->dest[5]);
+	// printf("	SRC ADDR: %02x:%02x:%02x:%02x:%02x:%02x\n", eth_header->src[0], eth_header->src[1], eth_header->src[2], eth_header->src[3], eth_header->src[4], eth_header->src[5]);
+	// printf("	PROTO: %d\n", ntohs(eth_header->type));
+
+	// if (ntohs(eth_header->type) == ETH_TYPE_IP)
 	{
 		/*
 		*	IP Header
@@ -204,8 +212,8 @@ static void	_individual_net_packet_handler(uint8_t *args, struct pcap_pkthdr con
 		printf("		ttl = %d\n", ip_header->ttl);
 		printf("		protocol = %d\n", ip_header->protocol);
 		printf("		check = 0x%04x\n", ntohs(ip_header->check));
-		printf("		dest address: %s\n", inet_ntoa(*(struct in_addr *)&ip_header->daddr));
-		printf("		src address: %s\n", inet_ntoa(*(struct in_addr *)&ip_header->saddr));
+		printf("		dest address: %s\n", inet_ntoa((struct in_addr){ip_header->daddr}));
+		printf("		src address: %s\n", inet_ntoa((struct in_addr){ip_header->saddr}));
 
 		if (ip_header->protocol == IPPROTO_TCP)
 		{
@@ -213,9 +221,9 @@ static void	_individual_net_packet_handler(uint8_t *args, struct pcap_pkthdr con
 			*	TCP Header
 			*/
 			tcp_header = (t_tcp_header *)(packet + sizeof(t_eth_header) + sizeof(t_ip_header));
-			printf("RECV PACKET FROM PORT %d TO PORT %d\n", ntohs(tcp_header->source), ntohs(tcp_header->dest));
+			printf("RECV PACKET FROM PORT %d TO PORT %d\n", tcp_header->source, tcp_header->dest);
 
-			port_listener_add(ntohs(tcp_header->source), (uint8_t *)ip_header); // we add the ip header to still have the informations about the type of packet recevied (tcp/udp/icmp...)
+			port_listener_add(tcp_header->source, (uint8_t *)ip_header); // we add the ip header to still have the informations about the type of packet recevied (tcp/udp/icmp...)
 
 			if (g_packet_lists.size == 10)
 				display_packet_list();
@@ -298,6 +306,21 @@ int	port_listener_init(t_port_listener *const listener, uint32_t ip_address, t_v
 		fprintf(stderr, "Couldn't open device %s: %s\n", listener->device_name, listener->error_buff);
 		return (4);
 	}
+
+
+	/*
+	 *	Gather the link layer here, i have discoevered that the packet
+	 *	 offset change based on that so i need to gather this information
+	 *	 to correct it later in the packet handler.
+	 */
+	listener->link_layer_type = pcap_datalink(listener->handle);
+	if (listener->link_layer_type == -1)
+	{
+		fprintf(stderr, "pcap_datalink() error\n");
+		fprintf(stderr, "Couldn't get the link layer type\n");
+		return (5);
+	}
+	printf("link layer type: %d\n", listener->link_layer_type);
 
 	/*
 	*	This function allocate 16777215 bytes to store the packets,
