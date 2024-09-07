@@ -1,0 +1,75 @@
+
+
+# MAIN FUNCTION #
+
+Nmap needs to send packets of different types to the destination ip, each on user selected ports.
+Then wait for the destination machine answers, to know the state of the port on it.
+
+	The packet sent to the destination machine will be sent individually with their corresponding flags.
+	All the work will be splitted between threads by a worker pool for maximum speed efficienty.
+
+		We have different packet options available:
+			SYN		: >SYN = <[RST, ACK (open) | SYN, ACK (closed) | ... (filtered)]
+			NULL	: >000 = <[... (open) | RST,ACK (closed)]
+			ACK		: >ACK = <[RST (closed), ... (open | filtered)]
+			FIN		: >FIN = <[... (open) | RST,ACK (closed)]
+			XMAS	: >URG, PUSH, FIN = <[... (open) | RST,ACK (closed)]
+			UDP		: see below...
+			
+				Any UDP response from target port (unusual)						open
+				No response received (even after retransmissions)				open|filtered
+				ICMP port unreachable error (type 3, code 3)					closed
+				Other ICMP unreachable errors (type 3, code 1, 2, 9, 10, or 13)	filtered
+
+
+	I will use the pcap library to capture packets sent by the destination machine.
+		We first select a device that handles a "10MB ethernet" link layer type.	#! important because else the captured packets will be offseted 
+		Then we create a packet handler function that pcap will execute every
+		 time a packet passes the filter pass.
+			The packet handler function will then store the packets in a singleton
+			 vector storing them by orderer key (port number) for fast access.
+
+
+# STRUCTURES #
+
+/*
+ * 	struct s_port_listener
+ * 	{
+ * 		uint32_t			targeted_address;
+ * 	
+ * 		pthread_t			thread;
+ * 	
+ * 		pcap_t				*handle;
+ * 		char				error_buff[PCAP_ERRBUF_SIZE];
+ * 		char				*device_name;
+ * 		bpf_u_int32			address;
+ * 		bpf_u_int32			mask;
+ * 		int					link_layer_type;
+ * 	
+ * 		struct bpf_program	compiled_expression;	// might end up being individual to each threads (maybe even each port !).
+ * 	};
+ */
+^^^
+PORT_LISTENER:
+	pcap_handle: !pcap_handle
+	...
+
+WORKER:
+	
+
+/*
+ *	Their is alot of data that i first stored in the options that arent necessary.
+ *
+ *		Like the number of threads, a vector of all the ports...
+ *
+ *	That was unnecessary permanent memory that complexified the use of the structure. 
+ *	Instead i will just store them temporarly in the parsing function stack,
+ *	 until the full ready to use equivalents are initialised.
+ */
+NMAP:
+	source_ip: uint32					# should probably be a uint8[6] to handle ipv6
+	destination_ip: uint32				# should probably be a uint8[6] to handle ipv6
+	destination_ports: vector(uint16)	# should probably store ports and actions related to them in NMAP
+	listener: port_listener
+	worker_pool: vector(worker)
+

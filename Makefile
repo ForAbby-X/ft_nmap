@@ -6,7 +6,7 @@
 #    By: alde-fre <alde-fre@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/11/25 09:39:09 by alde-fre          #+#    #+#              #
-#    Updated: 2024/08/16 14:56:47 by alde-fre         ###   ########.fr        #
+#    Updated: 2024/09/06 17:54:33 by alde-fre         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -27,11 +27,11 @@ LIBVEC_INC = -I $(LIBVEC_DIR)/inc
 
 ### SOURCES ###
 
-SRC		=	ft_nmap.c \
-			net/packet.c \
-			net/listener.c \
+SRC		=	main.c \
 			\
-			main.c
+			nmap.c \
+			port_listener.c \
+			\
 
 
 ### OBJECTS ###
@@ -41,7 +41,7 @@ OBJ		= $(addprefix $(OBJ_DIR)/,$(SRC:.c=.o))
 ### COMPILATION ###
 
 CC		= cc
-CFLAGS	= -MMD -MP -Wall -Wextra -Werror
+CFLAGS	= -MMD -MP -Wall -Wextra -Werror -gdwarf-4
 
 
 ### RULES ###
