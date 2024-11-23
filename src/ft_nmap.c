@@ -6,7 +6,7 @@
 /*   By: alde-fre <alde-fre@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/04 16:19:12 by alde-fre          #+#    #+#             */
-/*   Updated: 2024/08/23 11:35:49 by alde-fre         ###   ########.fr       */
+/*   Updated: 2024/11/23 23:50:45 by alde-fre         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -145,6 +145,9 @@ static void	*_nmap_thread_wrapper(void *arg)
 				}
 			}
 		}
+		
+		/* We sleep here to reduce cpu load by a crazy lot */
+		usleep(1);
 	}
 	return (arg);
 }
