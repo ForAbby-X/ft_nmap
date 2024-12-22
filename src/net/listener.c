@@ -6,7 +6,7 @@
 /*   By: alde-fre <alde-fre@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/09 08:20:10 by alde-fre          #+#    #+#             */
-/*   Updated: 2024/08/23 13:53:10 by alde-fre         ###   ########.fr       */
+/*   Updated: 2024/12/06 16:02:34 by alde-fre         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -220,7 +220,7 @@ int	port_listener_init(t_port_listener *const listener, uint32_t ip_address, t_v
 
 	listener->targeted_address = ip_address;
 
-	listener->device_name = "lo"; // @warning may be the cause of crash later !!! @todo change this for user input !!!
+	listener->device_name = "wlp82s0";			// @warning may be the cause of crash later !!! @todo change this for user input !!!
 	// pcap_if_t *device_list = NULL;		// @warning need to free this list !
 	// pcap_findalldevs(&device_list, listener->error_buff);
 	// listener->device_name = device_list->name;
@@ -241,8 +241,8 @@ int	port_listener_init(t_port_listener *const listener, uint32_t ip_address, t_v
 	}
 	
 	/*
-	*	This part where i allocate the whole memory is not necessary,
-	*	 i do this to limit the number of malloc during the execution
+	*	In this part i allocate the whole memory,
+	*	 i do this to limit the number of malloc calls during the execution
 	*	 and then make it faster and easier to handle errors.
 	*/
 	vector_resize(&g_packet_lists, port->size);
@@ -383,7 +383,7 @@ static void	*_listener_handle(void *arg)
 	pcap_set_timeout(listener->handle, 10000);
 
 	// the process will stay stuck here due to an infinite loop.
-	if (pcap_loop(listener->handle, 0, &_individual_net_packet_handler, NULL) == -1) // last	 param is args value, i will probably not use it.
+	if (pcap_loop(listener->handle, 0, &_individual_net_packet_handler, NULL) == -1) // last param is args value, i will probably not use it.
 	{
 		fprintf(stderr, "pcap_loop() error\n");
 		fprintf(stderr, "Couldn't launch the pcap loop\n");

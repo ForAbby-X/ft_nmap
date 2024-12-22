@@ -6,7 +6,7 @@
 /*   By: alde-fre <alde-fre@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/04 16:19:12 by alde-fre          #+#    #+#             */
-/*   Updated: 2024/11/23 23:50:45 by alde-fre         ###   ########.fr       */
+/*   Updated: 2024/12/13 13:19:34 by alde-fre         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -213,7 +213,7 @@ int	nmap_scan(t_nmap_options *const options)
 	{
 		fprintf(stderr, "port_listener_init() error\n");
 		fprintf(stderr, "Can't init port listener\n");
-		port_listener_destroy(&port_listener);					// forcing myself to o that to respect the engineer guide: "fast and ugly"
+		port_listener_destroy(&port_listener);					// forcing myself to do that to respect the engineer guide: "fast and ugly"
 		return (1);
 	}
 
